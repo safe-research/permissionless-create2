@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ERC-7955: Permissionless CREATE2</title>
+
+    <link rel="stylesheet" type="text/css" href="index.css" />
+  </head>
+  <body>
+    <h1>ERC-7955: Permissionless CREATE2</h1>
+
+    <p>
+      Permissionless CREATE2 factory can be deployed by anyone. Connect your
+      wallet in order to deploy the CREATE2 factory contract to
+      <code>0xC0DEb853af168215879d284cc8B4d0A645fA9b0E</code>.
+    </p>
+    <p>
+      You can read more about it
+      <a
+        target="_blank"
+        rel="noopener noreferrer"
+        href="https://ercs.ethereum.org/ERCS/erc-7955"
+      >here</a>.
+    </p>
+
+    <h2>Connect your wallet:</h2>
+    <select id="wallet-provider" required="lutrue"></select>
+    <button id="wallet-connect" disabled="true" autocomplete="off">
+      Connect
+    </button>
+    <code id="wallet-details"></code>
+
+    <h2>Bootstrapping contract:</h2>
+    <p>
+      The bootstrapping contract is used as an EIP-7702 delegation target for
+      the permissionless CREATE2 factory contract deployment.
+    </p>
+    <p>
+      Status:
+      <code id="bootstrap-status">Not Connected</code>
+      <button id="bootstrap-deploy" disabled="true" autocomplete="off">
+        Deploy
+      </button>
+    </p>
+
+    <h2>CREATE2 factory:</h2>
+    <p>
+      The permissionless CREATE2 factory can be deployed by anyone with the
+      bootstrapping contract.
+    </p>
+    <p id="factory-notify" style="display: none">
+      Your connected wallet does not support EIP-7702 type <code>0x4</code>
+      transactions. In order to proceed with the deployment, a burner account at
+      address <code id="burner-address"></code> will be funded to execute the
+      permissionless CREATE2 factory deployment.
+    </p>
+    <p>
+      Status:
+      <code id="factory-status">Not Connected</code>
+      <button id="factory-deploy" disabled="true" autocomplete="off">
+        Deploy
+      </button>
+    </p>
+
+    <script type="module" src="index.mjs"></script>
+  </body>
+</html>
