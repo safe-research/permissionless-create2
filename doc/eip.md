@@ -61,7 +61,7 @@ This ERC proposes a permissionless alternative fourth mechanism to the existing 
 **Benefits**
 
 - Universally applicable: It can be executed on any chain by any user and guarantees a reliable determination of smart contract deployments on any chain.
-- Fault resistant: The method is secure against gas timeouts and other errors.
+- Fault resistant: The method is secure against "out of gas" and other errors.
 - Permissionless: The method can be used by anyone on any EVM-compatible chain.
 
 ## Specification
