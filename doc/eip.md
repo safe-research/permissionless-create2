@@ -1,5 +1,5 @@
 ---
-title: Permissionless CREATE2 Factory via EIP-7702
+title: Univeral CREATE2 Factory
 description: Standard deployment parameters for a permissionless CREATE2 factory contract with deterministic address.
 author: Nicholas Rodrigues Lordello (@nlordell), Richard Meissner (@rmeissner)
 discussions-to: <URL>
@@ -46,7 +46,7 @@ Keep a carefully guarded secret key and use it to sign transactions to deploy CR
 
 #### 3. CREATE2 deployment factories
 
-Have popular CREATE2 deployment factories deployed on new chains by default. This is, for example, what OP Stack does as part of their [preinstalls](https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts-bedrock/src/libraries/Preinstalls.sol), including the CREATE2 factory contracts mentioned above. This ensures that the CREATE2 factory contracts have known addresses and codes.
+Have popular CREATE2 deployment factories deployed on new chains by default. This is, for example, what OP Stack does as part of their [preinstalls](https://github.com/ethereum-optimism/optimism/blob/12c5398a1725a2aafc3e7abb0711cf761a2b20b1/packages/contracts-bedrock/src/libraries/Preinstalls.sol), including the CREATE2 factory contracts mentioned above. This ensures that the CREATE2 factory contracts have known addresses and codes.
 
 **Downsides**:
 
@@ -54,16 +54,15 @@ Have popular CREATE2 deployment factories deployed on new chains by default. Thi
 - It is permissioned as a chain can choose not to include a specific CREATE2 factory contract preinstalled.
 - Attempts to standardize this with [RIP-7740](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7740.md) have not been successful.
 
-This ERC proposes a permissionless alternative fourth mechanism to the existing ones described above with none of their downsides. Additionally, it standardizes a set of deployment parameters for a **unique** CREATE2 factory deployment. This ensures a common CREATE2 factory for the community instead of multiple competing copies with slightly different codes at different addresses. This single CREATE2 factory copy can bootstrap additional deterministic deployment infrastructure (such as the comprehensive CreateX universal contract deployer).
-
 ### Proposal: Using type-4 transactions
 
-This ERC proposes a fourth solution: A publicly available deployer address uses a type-4 delegation from EIP-7702 to execute the CREATE2 call from a standardized bootstrap contract.
+This ERC proposes a permissionless alternative fourth mechanism to the existing ones described above with none of their downsides. Additionally, it standardizes a set of deployment parameters for a **universal** CREATE2 factory deployment. This ensures a common CREATE2 factory for the community instead of multiple competing copies with slightly different codes at different addresses. This single CREATE2 factory copy can bootstrap additional deterministic deployment infrastructure (such as the comprehensive CreateX universal contract deployer).
 
 **Benefits**
 
-  Universally applicable: It can be executed on any chain by any user and guarantees a reliable determination of Smart Contract deployments on any chain.
-  - Fault resistant: The method is secure against gas timeouts and other errors.
+- Universally applicable: It can be executed on any chain by any user and guarantees a reliable determination of smart contract deployments on any chain.
+- Fault resistant: The method is secure against gas timeouts and other errors.
+- Permissionless: The method can be used by anyone on any EVM-compatible chain.
 
 ## Specification
 
