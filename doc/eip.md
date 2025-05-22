@@ -31,7 +31,7 @@ Use Nick's method to randomly generate a signature for a transaction **without**
 **Downsides**:
 
 - It does not work on chains that only accept EIP-155 replay-protected transactions.
-- It is sensitive to changes in gas parameters on the target chain since the gas price in the deployment transaction is sealed, and a new one cannot be signed without a private key.
+- It is sensitive to changes in gas parameters on the target chain since the gas price and limit in the deployment transaction is sealed, and a new one cannot be signed without a private key.
 - Reverts due to alternative gas schedules make the CREATE2 factory no longer deployable.
 
 #### 2. Secret private key
