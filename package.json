@@ -1,11 +1,11 @@
 {
-  "name": "@cc0x-research/permissionless-create2",
+  "name": "@safe-research/permissionless-create2",
   "version": "1.0.0",
   "description": "Permissionless CREATE2 Factory Deployment",
   "scripts": {
     "test": "hardhat test"
   },
-  "author": "cc0x Research <research@cc0x.dev>",
+  "author": "Safe Research <research@safe.global>",
   "license": "GPL-3.0-only",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
