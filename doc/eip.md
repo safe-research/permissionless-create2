@@ -62,7 +62,7 @@ This ERC proposes a permissionless alternative fourth mechanism to the existing 
 
 - Universally applicable: It can be executed on any chain by any user and guarantees a reliable determination of smart contract deployments on any chain.
 - Fault resistant: The method is secure against "out of gas" and other errors.
-- Permissionless: The method can be used by anyone on any EVM-compatible chain.
+- Permissionless: The universal CREATE2 factory contract can be deployed by anyone on any EVM-compatible chain.
 
 ## Specification
 
