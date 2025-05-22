@@ -1,7 +1,7 @@
 ---
-title: Permissionless CREATE2 Factory
-description: Standard deployment parameters for a permissionless CREATE2 factory contract with deterministic address.
-author: Nicholas Rodrigues Lordello (@nlordell), Richard Meissner (@rmeissner)
+title: Univeral CREATE2 Factory
+description: A permissionless method for the cross-chain deployment of a universal CREATE2 factory.
+author: Nicholas Rodrigues Lordello (@nlordell), Richard Meissner (@rmeissner), Valentin Seehausen (@vseehausen)
 discussions-to: <URL>
 status: Draft
 type: Standards Track
@@ -12,28 +12,57 @@ requires: EIP-1014, EIP-7702
 
 ## Abstract
 
-This ERC specifies an alternative mechanism using the [EIP-7702](./eip-7702.md) `Set Code for EOAs (0x4)` transaction type as well as deployment parameters for a permissionless CREATE2 factory contract with deterministic cross-chain address (`0xC0DE8E984dF1846E6AdE500972641ce0a9669e1b`) and code. The deployed contract can then be used to deploy any other contracts to deterministic addresses by leveraging the [EIP-1014](./eip-1014.md) `CREATE2 (0xf5)` opcode.
+This ERC defines a permissionless and deterministic deployment mechanism across all EVM-compatible chains. It uses the [EIP-7702](./eip-7702.md) `Set Code for EOAs (0x4)` transaction type to deploy a universal CREATE2 factory contract to a fixed address (`0xC0DE207acb0888c5409E51F27390Dad75e4ECbe7`) with known bytecode. The factory can then create any new contract to a deterministic address using the [EIP-1014](./eip-1014.md) `CREATE2 (0xf5)` opcode. It does not require preinstalls, secret keys, or chain-specific infrastructure.
 
 ## Motivation
 
 Ensuring that contracts share the same address and code on multiple chains is a hard problem. It is typically done by having a known CREATE2 factory contract at a specific address that can further deterministically deploy new contracts using the `CREATE2 (0xf5)` opcode.
 
-However, there is a bootstrapping problem: how do you get a CREATE2 factory contract with specific address and code? There are currently three main approaches to this problem:
+However, there is a bootstrapping problem: how do you get a CREATE2 factory contract with a specific address and code? 
 
-1. Use Nick's method to randomly generate a signature for a transaction **without** [EIP-155](./eip-155.md) replay protection that deploys the CREATE2 factory. Nick's method ensures that there is no known private key for account that deploys the CREATE2 factory, meaning that the resulting contract will have deterministic address and code on all chains. This is the strategy used by [Arachnid/deterministic-deployment-proxy](https://github.com/Arachnid/deterministic-deployment-proxy), one of the most widely used CREATE2 factory contracts. However, this method comes with some downsides:
-   - It does not work on chains that only accept EIP-155 replay protected transactions.
-   - It is sensitive to changes in gas parameters on the target chain since the gas price in the deployment transaction is sealed, and without a private key, a new one cannot be signed.
-   - Reverts due to alternative gas schedules make the CREATE2 factory no longer deployable.
-2. Keep a carefully guarded secret key, and use it sign transactions to deploy CREATE2 factory contracts. The resulting contract will have a deterministic address and code on all chains where the first transaction of the deployer account is a CREATE2 factory deployment, which can be verified post deployment in order to ensure trustlessness. This is the strategy used by [safe-global/safe-singleton-factory](https://github.com/safe-global/safe-singleton-factory) and [pcaversaccio/createx](https://github.com/pcaversaccio/createx). This method also has some downsides:
-   - It is permissioned: the party that holds the secret key has the ultimate say on which chains will get the CREATE2 factory deployments.
-   - This requires carefully guarding a secret key, if it is exposed or lost, then deployments are no longer guaranteed on new chains.
-   - If the first transaction is not a successful CREATE2 factory deployment, than it is no longer possible to have a CREATE2 factory at the common address; this can happen by human error for example.
-3. Have popular CREATE2 deployment factories deployed on new chains by default. This is, for example, what OP Stack does as part of their [preinstalls](https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts-bedrock/src/libraries/Preinstalls.sol) including the CREATE2 factory contracts mentioned above. This ensures that the CREATE2 factory contracts have known address and code. The downsides to this approach are:
-   - It is not standardized nor adopted by all chains.
-   - It is permissioned as a chain can choose to not include a specific CREATE2 factory contract preinstalled.
-   - Attempts to standardize this with [RIP-7740](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7740.md) have not been successful.
+### Existing Solutions
 
-This ERC proposes a permissionless alternative fourth mechanisms to the existing ones described above with none of their downsides. Additionally, it standardizes a set of deployment parameters for a **unique** CREATE2 factory deployment. This ensures a common CREATE2 factory for the community, instead of having multiple competing copies at different addresses with slightly different code. This single CREATE2 factory copy can be used to bootstrap additional deterministic deployment infrastructure (such as the aforementioned comprehensive CreateX universal contract deployer).
+There are currently three main approaches to this problem:
+
+#### 1. Nick's method
+
+Use Nick's method to randomly generate a signature for a transaction **without** [EIP-155](./eip-155.md) replay protection that deploys the CREATE2 factory. Nick's method ensures that there is no known private key for an account that deploys the CREATE2 factory, meaning that the resulting contract will have a deterministic address and code on all chains. This strategy is used by [Arachnid/deterministic-deployment-proxy](https://github.com/Arachnid/deterministic-deployment-proxy), one of the most widely used CREATE2 factory contracts.
+
+**Downsides**:
+
+- It does not work on chains that only accept EIP-155 replay-protected transactions.
+- It is sensitive to changes in gas parameters on the target chain since the gas price and limit in the deployment transaction is sealed, and a new one cannot be signed without a private key.
+- Reverts due to alternative gas schedules make the CREATE2 factory no longer deployable.
+
+#### 2. Secret private key
+
+Keep a carefully guarded secret key and use it to sign transactions to deploy CREATE2 factory contracts. The resulting contract will have a deterministic address and code on all chains where the first transaction of the deployer account is a CREATE2 factory deployment, which can be verified post-deployment to ensure trustlessness. This is the strategy used by [safe-global/safe-singleton-factory](https://github.com/safe-global/safe-singleton-factory) and [pcaversaccio/createx](https://github.com/pcaversaccio/createx). 
+
+**Downsides**:
+
+- It is permissioned: the party that holds the secret key has the ultimate say on which chains will get the CREATE2 factory deployments. 
+- This requires carefully guarding a secret key; if it is exposed or lost, deployments are no longer guaranteed on new chains.
+- If the first transaction is not a successful CREATE2 factory deployment, then it is no longer possible to have a CREATE2 factory at the common address; this can happen by human error, for example.
+
+#### 3. CREATE2 deployment factories
+
+Have popular CREATE2 deployment factories deployed on new chains by default. This is, for example, what OP Stack does as part of their [preinstalls](https://github.com/ethereum-optimism/optimism/blob/12c5398a1725a2aafc3e7abb0711cf761a2b20b1/packages/contracts-bedrock/src/libraries/Preinstalls.sol), including the CREATE2 factory contracts mentioned above. This ensures that the CREATE2 factory contracts have known addresses and codes.
+
+**Downsides**:
+
+- It is not standardized nor adopted by all chains.
+- It is permissioned as a chain can choose not to include a specific CREATE2 factory contract preinstalled.
+- Attempts to standardize this with [RIP-7740](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7740.md) have not been successful.
+
+### Proposal: Using type-4 transactions
+
+This ERC proposes a permissionless alternative fourth mechanism to the existing ones described above with none of their downsides. Additionally, it standardizes a set of deployment parameters for a **universal** CREATE2 factory deployment. This ensures a common CREATE2 factory for the community instead of multiple competing copies with slightly different codes at different addresses. This single CREATE2 factory copy can bootstrap additional deterministic deployment infrastructure (such as the comprehensive CreateX universal contract deployer).
+
+**Benefits**
+
+- Universally applicable: It can be executed on any chain by any user and guarantees a reliable determination of smart contract deployments on any chain.
+- Fault resistant: The method is secure against "out of gas" and other errors.
+- Permissionless: The universal CREATE2 factory contract can be deployed by anyone.
 
 ## Specification
 
@@ -98,18 +127,18 @@ The deployment mechanism was chosen such that it is uniquely parameterized by th
 
 The use of a publicly known private key enables this mechanism, as anyone can permissionlessly generate a delegation signature to **any** bootstrap contract that would cause the `DEPLOYER_ADDRESS` to execute the specified `CREATE2 (0xf5)` operation and deploy the factory contract to a completely deterministic address. Because of the use of `CREATE2 (0xf5)`, the CREATE2 factory will be deployed to `CREATE2_FACTORY_ADDRESS` if and only it is deployed with `CREATE2_FACTORY_INIT_CODE`, thus guaranteeing a deployed code hash of `CREATE2_FACTORY_CODE_HASH`. Additionally, the semantics of `CREATE2 (0xf5)` make it so no transaction executed by `DEPLOYER_ADDRESS` can permanently block the deployment of the CREATE2 factory contract.
 
-One issue with this method is that, because the `DEPLOYER_PRIVATE_KEY` is public, anyone can sign alternative delegation or transactions and front-run a legitimate CREATE2 factory deployment. We consider this to not be a serious issue however as:
+One issue with this method is that because the `DEPLOYER_PRIVATE_KEY` is public, anyone can sign alternative delegations or transactions and front-run a legitimate CREATE2 factory deployment. We consider this to not be a serious issue however, as:
 
 1. Doing so does not prevent future deployments - meaning that an attacker can only delay the deployment of the CREATE2 factory with a sustained attack at a gas cost to the attacker.
-2. The damage is limited to gas griefing for accounts that are legitimately trying to deploy the CREATE2 factory contract. Furthermore, the reference implementation was coded in a such a way to minimize the gas griefing damage.
+2. The damage is limited to gas griefing for accounts that are legitimately trying to deploy the CREATE2 factory contract. Furthermore, the reference implementation was coded to minimize the gas griefing damage.
 3. In the case of a very persistent malicious actor, their attack can be circumvented by either making use of private transactions or working directly with block builders.
 
 ### Use of CREATE2 Factory Contract
 
-This mechanism allows the `DEPLOYER_ADDRESS` to do any `CREATE2 (0xf5)` deployment, so it would be possible to forgo the intermediary CREATE2 factory contract, and use the deployer technique for all deployments. There are multiple downsides to this, however:
+This mechanism allows the `DEPLOYER_ADDRESS` to do any `CREATE2 (0xf5)` deployment, so it would be possible to forgo the intermediary CREATE2 factory contract and use the deployer technique for all deployments. There are multiple downsides to this, however:
 
-- All contract deployments are subject to the front-running issue described above; which could become an annoyance
-- Concurrent deployments from the deployer are subject to race conditions, since EIP-7702 authorizations increase the account nonce. This means that if two deployments are submitted to the mem-pool without knowing about each other, only the first one will actually succeed, because the EIP-7702 authorization in the second transaction is for an outdated nonce. This is not an issue when deployers are trying to deploy the same contract as we propose in this ERC, since even if the second delegation and transaction fails, the contract would have been deployed as desired.
+- All contract deployments are subject to the front-running issue described above, which could become an annoyance
+- Concurrent deployments from the deployer are subject to race conditions since EIP-7702 authorizations increase the account nonce. This means that if two deployments are submitted to the mem-pool without knowing about each other, only the first one will actually succeed, because the EIP-7702 authorization in the second transaction is for an outdated nonce. This is not an issue when deployers are trying to deploy the same contract as we propose in this ERC since even if the second delegation and transaction fails, the contract would have been deployed as desired.
 
 ### Multiple Transaction Procedure
 
@@ -125,7 +154,7 @@ The `CREATE2_FACTORY_SALT` was chosen as the **first** salt value starting from 
 
 ### CREATE2 Factory Bytecode
 
-The CREATE2 factory has a similar interface to existing implementations. Namely, it accepts `salt || init_code` as input, that is a 32-byte `salt` value concatenated with the `init_code` of the contract to deploy. It will execute a `CREATE2` with the specified `salt` and `init_code`, deploying a contract with `init_code` to `keccak256(0xff || CREATE2_FACTORY_ADDRESS || salt ++ keccak256(init_code))[12:]`.
+The CREATE2 factory has a similar interface to existing implementations. Namely, it accepts `salt || init_code` as input, which is a 32-byte `salt` value concatenated with the `init_code` of the contract to deploy. It will execute a `CREATE2` with the specified `salt` and `init_code`, deploying a contract with `init_code` to `keccak256(0xff || CREATE2_FACTORY_ADDRESS || salt ++ keccak256(init_code))[12:]`.
 
 Note that this contract returns the address of the created contract padded to 32 bytes. This differs from some existing implementations, but was done to maintain consistency with the 32-byte word size on the EVM (same encoding as `ecrecover` precompile for example). A product of this is that the return data from CREATE2 factory is compatible with the Solidity ABI.
 
@@ -220,7 +249,7 @@ If this ERC would gain sufficient adoption, then this may not be an issue as:
 
 ## Reference Implementation
 
-We include a reference implementation of a bootstrap contract that the deployer account can delegate to. The reference implementation expects a call to `Bootstrap` to the function `deploy()` in an EIP-7702 type `0x4` transaction including the EIP-7702 authorization delegating `DEPLOYER_ADDRESS` to `Bootstrap` (NOTE: the `Bootstrap` is called as an entry point, instead of calling `DEPLOYER_ADDRESS` directly which allows the contract to do some up-front checks in order to minimize gas griefing risk):
+We include a reference implementation of a bootstrap contract to which the deployer account can delegate. The reference implementation expects a call to `Bootstrap` to the function `deploy()` in an EIP-7702 type `0x4` transaction including the EIP-7702 authorization delegating `DEPLOYER_ADDRESS` to `Bootstrap` (NOTE: the `Bootstrap` is called as an entry point, instead of calling `DEPLOYER_ADDRESS` directly which allows the contract to do some up-front checks to minimize gas griefing risk):
 
 ```solidity
 // SPDX-License-Identifier: CC0
