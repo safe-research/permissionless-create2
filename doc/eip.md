@@ -1,5 +1,5 @@
 ---
-title: Univeral CREATE2 Factory
+title: Permissionless CREATE2 Factory
 description: A permissionless method for the cross-chain deployment of a universal CREATE2 factory.
 author: Nicholas Rodrigues Lordello (@nlordell), Richard Meissner (@rmeissner), Valentin Seehausen (@vseehausen)
 discussions-to: <URL>
