@@ -3,50 +3,58 @@
 ### CREATE2 Factory Runtime Code
 # The CREATE2 factory expects calldata to be a 32-byte CREATE2 salt value
 # followed by the contract init code.
+#
+# Throughout the code, we use `returndatasize` in order to push `0` onto the
+# stack. Note that `CREATE2`, like `CREATE`, is specified to **only** set return
+# data (and therefore modify `returndatasize`) in case of reverts. Therefore,
+# `returndatasize` reliably pushes `0` everywhere except for the `:revert`
+# branch which handles failed contract creation (successful contract creation
+# sets empty return data, meaning a `returndatasize` of `0`).
 
-  # Push a useful value onto the stack: 32.
+  # Prepare our stack, push `32`, a value we will use a lot and can summon with
+  # `dup` to save on one byte of code (over `push 32`), and a `0` which will
+  # be used by either the `:return` or `:revert` branches at the end.
   push 32
+  returndatasize # push 0
 
   # First, load the salt value and compute the actual code size for the CREATE2
   # call, this is the calldata length minus 32 for the salt prefix.
-  ## STACK: [ 32 ]
-  push 0
+  ## STACK: [ 0; 32 ]
+  returndatasize # push 0
   calldataload
-  dup %2
+  dup %3
   calldatasize
   sub
 
   # Copy the init code to memory offset 0.
-  ## STACK: [ (calldatasize - 32) ; salt; 32 ]
+  ## STACK: [ (calldatasize - 32); salt; 0; 32 ]
   dup %1
-  dup %4
-  push 0
+  dup %5
+  returndatasize # push 0
   calldatacopy
 
   # Deploy the contract.
-  ## STACK:  [ (calldatasize - 32) ; salt; 32 ]
+  ## STACK:  [ (calldatasize - 32); salt; 0; 32 ]
   ## MEMORY: [ calldata[32:calldatasize - 32] ]
-  push 0
+  returndatasize # push 0
   callvalue
   create2
 
   # Verify the deployment was successful.
-  ## STACK: [ address; 32 ]
+  ## STACK: [ address; 0; 32 ]
   dup %1
   push $(success)
   jumpi
 
 :revert
   # Revert if CREATE2 was not successful
-  ## STACK: [ 0; 32 ]
-  swap %1
+  ## STACK: [ 0; 0; 32 ]
   revert
 
 :success
   # Revert if CREATE2 was not successful
-  ## STACK: [ address; 32 ]
+  ## STACK: [ address; 0; 32 ]
   jumpdest
-  push 0
+  returndatasize # push 0
   mstore
-  push 0
   return

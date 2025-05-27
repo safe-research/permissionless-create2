@@ -135,7 +135,7 @@ describe("Factory", function () {
 
     // This test takes a long time to run, so skip it by default.
     it.skip("should be a verifiably computed salt", async function () {
-      this.timeout(120000);
+      this.timeout(300000);
 
       const constants = await ethers.deployContract("Constants");
 

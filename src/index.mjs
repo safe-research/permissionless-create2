@@ -5,8 +5,8 @@ export const MNEMONIC =
   "make code code code code code code code code code code coconut";
 
 export const DEPLOYER = "0x962560A0333190D57009A0aAAB7Bfa088f58461C";
-export const FACTORY = "0xC0DE8E984dF1846E6AdE500972641ce0a9669e1b";
-export const RUNCODE = "0x60205f3581360380835f375f34f58060145790fd5b5f525ff3";
+export const FACTORY = "0xC0DE945918F144DcdF063469823a4C51152Df05D";
+export const RUNCODE = "0x60203d3d3582360380843d373d34f580601457fd5b3d52f3";
 
 export async function deployFactory(
   signer,

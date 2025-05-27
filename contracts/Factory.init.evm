@@ -3,9 +3,9 @@
 ### CREATE2 Factory Init Code
 # Return the CREATE2 factory untime code.
 
-  push 0x60205f3581360380835f375f34f58060145790fd5b5f525ff3
-  push 0
+  push 0x60203d3d3582360380843d373d34f580601457fd5b3d52f3
+  returndatasize # push 0
   mstore
-  push 25
-  push 7
+  push 24
+  push 8
   return
