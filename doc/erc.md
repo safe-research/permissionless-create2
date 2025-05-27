@@ -169,8 +169,8 @@ The `CREATE2_FACTORY_INIT_CODE` corresponds to the following assembly:
                         # Stack: [runcode]                      | Push the CREATE2 factory runtime code
 0x0019: RETURNDATASIZE  # Stack: [0; runcode]                   | Push the offset in memory to store the code
 0x001a: MSTORE          # Stack: []                             | The runtime code is now in `memory[8:32]`
-0x001b: PUSH1 25        # Stack: [24]                           | Push the code length
-0x001d: PUSH1 7         # Stack: [8; 24]                        | Push the memory offset of the start of code
+0x001b: PUSH1 24        # Stack: [24]                           | Push the code length
+0x001d: PUSH1 8         # Stack: [8; 24]                        | Push the memory offset of the start of code
 0x001f: RETURN          # Stack: []                             | Return the runtime code
 ```
 
