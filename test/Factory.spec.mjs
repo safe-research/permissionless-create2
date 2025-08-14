@@ -1,3 +1,4 @@
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
 import {
@@ -19,15 +20,10 @@ describe("Factory", function () {
       if (network.name !== "localhost") {
         this.skip();
       }
-
-      const provider = new ethers.JsonRpcProvider("http://localhost:8545");
-      signer = ethers.Wallet.fromPhrase(
-        "test test test test test test test test test test test junk",
-        provider,
-      );
     });
 
     it("should deploy the CREATE2 factory contract", async function () {
+      const [signer] = await ethers.getSigners();
       const factory = await deployFactory(signer);
       const code = await ethers.provider.getCode(factory);
 
@@ -40,7 +36,16 @@ describe("Factory", function () {
     // can be manually run by `s/skip/only/` and running against a blank local
     // development node.
     it.skip("should re-delegate the deployer", async function () {
-      const delegate = await ethers.deployContract("Delegate", signer);
+      const [signer] = await ethers.getSigners();
+      const constants = await ethers.deployContract("Constants");
+      await constants.deploymentTransaction().wait();
+
+      let factory = await constants.ADDRESS();
+      let code = await ethers.provider.getCode(factory);
+
+      expect(code).to.equal("0x");
+
+      const delegate = await ethers.deployContract("Delegate");
       await delegate.deploymentTransaction().wait();
 
       await expect(
@@ -48,13 +53,9 @@ describe("Factory", function () {
       ).to.be.rejected;
 
       const message = await delegate.attach(DEPLOYER).echo("hello");
+      code = await ethers.provider.getCode(factory);
 
       expect(message).to.equal("hello");
-
-      const constants = await ethers.deployContract("Constants");
-      let factory = await constants.ADDRESS();
-      let code = await ethers.provider.getCode(factory);
-
       expect(code).to.equal("0x");
 
       factory = await deployFactory(signer);
@@ -65,6 +66,7 @@ describe("Factory", function () {
     });
 
     it("should deploy to the epected address", async function () {
+      const [signer] = await ethers.getSigners();
       const factory = await deployFactory(signer);
       const code = await ethers.provider.getCode(factory);
 
@@ -75,6 +77,7 @@ describe("Factory", function () {
     });
 
     it("should be idempotent", async function () {
+      const [signer] = await ethers.getSigners();
       const factory1 = await deployFactory(signer);
       const factory2 = await deployFactory(signer);
 
@@ -85,6 +88,7 @@ describe("Factory", function () {
     });
 
     it("should allow CREATE2 deployments of contracts", async function () {
+      const [signer] = await ethers.getSigners();
       const factory = await deployFactory(signer);
 
       const Bootstrap = await ethers.getContractFactory("Bootstrap");
@@ -114,13 +118,13 @@ describe("Factory", function () {
     it("should have correct constants", async function () {
       const constants = await ethers.deployContract("Constants");
 
-      expect(await constants.ADDRESS()).to.equal(
-        ethers.getCreate2Address(
-          await constants.DEPLOYER(),
-          await constants.SALT(),
-          ethers.keccak256(await constants.INITCODE()),
-        ),
+      const address = ethers.getCreate2Address(
+        await constants.DEPLOYER(),
+        await constants.SALT(),
+        ethers.keccak256(await constants.INITCODE()),
       );
+
+      expect(await constants.ADDRESS()).to.equal(address);
 
       const [signer] = await ethers.getSigners();
       const tx = await signer.sendTransaction({
@@ -128,9 +132,10 @@ describe("Factory", function () {
       });
       const { contractAddress: factory } = await tx.wait();
       const code = await ethers.provider.getCode(factory);
+      const codeHash = ethers.keccak256(code);
 
       expect(await constants.RUNCODE()).to.equal(code);
-      expect(await constants.CODEHASH()).to.equal(ethers.keccak256(code));
+      expect(await constants.CODEHASH()).to.equal(codeHash);
     });
 
     // This test takes a long time to run, so skip it by default.
@@ -157,54 +162,88 @@ describe("Factory", function () {
   });
 
   describe("implementation", function () {
-    it("should allow CREATE2 deployments of contracts", async function () {
+    async function fixture() {
       const constants = await ethers.deployContract("Constants");
       const [signer] = await ethers.getSigners();
       const tx = await signer.sendTransaction({
         data: await constants.INITCODE(),
       });
       const { contractAddress: factory } = await tx.wait();
+      const deploy = async ({ salt, code }) => {
+        const data = ethers.concat([salt, code]);
+        const [address] = ethers.AbiCoder.defaultAbiCoder().decode(
+          ["address"],
+          await signer.call({ to: factory, data }),
+        );
+        const create = await signer.sendTransaction({ to: factory, data });
+        const receipt = await create.wait();
+        if (receipt.status !== 1) {
+          throw new Error("transaction reverted");
+        }
+        return address;
+      };
 
-      const Bootstrap = await ethers.getContractFactory("Bootstrap");
-      const { data: code } = await Bootstrap.getDeployTransaction();
+      return { signer, factory, deploy };
+    }
+
+    async function getInitCode(contract) {
+      const factory = await ethers.getContractFactory(contract);
+      const { data: code } = await factory.getDeployTransaction();
+      return code;
+    }
+
+    it("should allow CREATE2 deployments of contracts", async function () {
+      const { factory, deploy } = await loadFixture(fixture);
+
+      const code = await getInitCode("Bootstrap");
       const salt = ethers.randomBytes(32);
-
-      const data = ethers.concat([salt, code]);
-      const [address] = ethers.AbiCoder.defaultAbiCoder().decode(
-        ["address"],
-        await signer.call({ to: factory, data }),
+      const address = ethers.getCreate2Address(
+        factory,
+        salt,
+        ethers.keccak256(code),
       );
 
-      expect(address).to.equal(
-        ethers.getCreate2Address(factory, salt, ethers.keccak256(code)),
-      );
       expect(await ethers.provider.getCode(address)).to.equal("0x");
 
-      const create = await signer.sendTransaction({ to: factory, data });
-      await create.wait();
-      const deployed = await ethers.provider.getCode(address);
+      const deployedAddress = await deploy({ salt, code });
+      const deployedCode = await ethers.provider.getCode(address);
 
-      expect(ethers.dataLength(deployed)).to.be.gt(0);
+      expect(deployedAddress).to.equal(address);
+      expect(ethers.dataLength(deployedCode)).to.be.gt(0);
+    });
+
+    it("should allow CREATE2 deployments with empty code", async function () {
+      const { factory, deploy } = await loadFixture(fixture);
+
+      const salt = ethers.randomBytes(32);
+      const address = ethers.getCreate2Address(factory, salt, ethers.id(""));
+
+      const deployedAddress = await deploy({ salt, code: "0x" });
+      const deployedCode = await ethers.provider.getCode(address);
+
+      expect(deployedAddress).to.equal(address);
+      expect(deployedCode).to.equal("0x");
+    });
+
+    it("should revert when input is incorrectly encoded", async function () {
+      const { signer, factory } = await loadFixture(fixture);
+
+      const salt = ethers.randomBytes(32);
+      for (let i = 0; i < 32; i++) {
+        const data = ethers.dataSlice(salt, 0, i);
+        await expect(signer.call({ to: factory, data })).to.be.rejected;
+      }
     });
 
     it("should propagate reverts", async function () {
-      const constants = await ethers.deployContract("Constants");
-      const [signer] = await ethers.getSigners();
-      const tx = await signer.sendTransaction({
-        data: await constants.INITCODE(),
-      });
-      const { contractAddress: factory } = await tx.wait();
+      const { deploy } = await loadFixture(fixture);
 
-      const Revert = await ethers.getContractFactory("Revert");
-      const { data: code } = await Revert.getDeployTransaction();
+      const code = await getInitCode("Revert");
       const salt = ethers.randomBytes(32);
 
-      const data = ethers.concat([salt, code]);
-
-      // NOTE: The CREATE2 factory does not propagate the revert data.
-      await expect(
-        signer.call({ to: factory, data }),
-      ).to.be.revertedWithoutReason();
+      await expect(deploy({ salt, code })).to.be.revertedWith(
+        "all your base are belong to us",
+      );
     });
   });
 });
