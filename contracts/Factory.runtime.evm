@@ -26,7 +26,9 @@
   calldatasize
   sub
 
-  # Copy the init code to memory offset 0.
+  # Copy the init code to memory offset 0. Note that if the call to the contract
+  # incorrectly encoded, this will revert with "out of gas", as it will attempt
+  # to copy ~2**256 bytes of calldata to memory.
   ## STACK: [ (calldatasize - 32); salt; 0; 32 ]
   dup %1
   dup %5
@@ -49,6 +51,11 @@
 :revert
   # Revert if CREATE2 was not successful
   ## STACK: [ 0; 0; 32 ]
+  returndatasize
+  dup %2
+  returndatasize
+  swap %4
+  returndatacopy
   revert
 
 :success
