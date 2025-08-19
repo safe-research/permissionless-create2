@@ -13,8 +13,8 @@ describe("Factory", function () {
     let signer;
     before(function () {
       // Currently, Hardhat does not work with EIP-7702 transactions, so we need
-      // to manually create communicate with the node. Skip this test if running
-      // against on the Hardhat network.
+      // to manually create communicate with the node. Skip these tests if
+      // running against on the Hardhat network.
       // <https://github.com/NomicFoundation/hardhat/issues/6578>
       if (network.name !== "localhost") {
         this.skip();

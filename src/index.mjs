@@ -38,10 +38,16 @@ export async function deployFactory(
     nonce,
   });
 
-  const tx = await bootstrap.deploy({ authorizationList: [authorization] });
+  const tx = await bootstrap.deploy({
+    nonce: await signer.getNonce(),
+    authorizationList: [authorization],
+  });
   const receipt = await tx.wait();
 
-  code = await signer.provider.getCode(FACTORY);
+  // Query the code at `receipt.blockNumber` instead of (the default) "latest"
+  // as there seems to be a race condition in Ethers.js + Anvil where we receive
+  // the receipt but state queries to "latest" are still on the previous block.
+  code = await signer.provider.getCode(FACTORY, receipt.blockNumber);
   if (code != RUNCODE) {
     throw new FactoryDeploymentError({
       bootstrap: await bootstrap.getAddress(),
@@ -52,21 +58,12 @@ export async function deployFactory(
   return FACTORY;
 }
 
-export function signDeployerDelegation({ chainId, address, nonce }) {
+export function signDeployerDelegation(auth) {
   const deployer = ethers.Wallet.fromPhrase(MNEMONIC);
-  const message = ethers.concat([
-    "0x05", // MAGIC
-    ethers.encodeRlp([
-      ethers.toBeArray(chainId),
-      ethers.getAddress(address),
-      ethers.toBeArray(nonce),
-    ]),
-  ]);
-  const signature = deployer.signingKey.sign(ethers.keccak256(message));
+  const authHash = ethers.hashAuthorization(auth);
+  const signature = deployer.signingKey.sign(authHash);
   return {
-    chainId,
-    address,
-    nonce,
+    ...auth,
     signature: signature.serialized,
   };
 }
