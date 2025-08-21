@@ -2,16 +2,17 @@
   "name": "@safe-research/permissionless-create2",
   "version": "1.0.0",
   "description": "ERC-7955: Permissionless CREATE2 Factory",
+  "type": "module",
   "scripts": {
-    "test": "hardhat test"
+    "build": "hardhat compile && tsc",
+    "test": "hardhat test nodejs"
   },
   "author": "Safe Research <research@safe.global>",
   "license": "GPL-3.0-only",
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
-    "hardhat": "^2.26.3"
-  },
-  "dependencies": {
-    "ethers": "^6.15.0"
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
+    "@types/node": "^22.17.2",
+    "hardhat": "^3.0.0",
+    "typescript": "^5.9.2"
   }
 }

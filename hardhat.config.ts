@@ -1,6 +1,8 @@
-require("@nomicfoundation/hardhat-toolbox");
+import viem from "@nomicfoundation/hardhat-toolbox-viem";
+import type { HardhatUserConfig } from "hardhat/config";
 
-module.exports = {
+const config: HardhatUserConfig = {
+  plugins: [viem],
   paths: {
     artifacts: "build/hardhat/artifacts",
     cache: "build/hardhat/cache",
@@ -17,3 +19,5 @@ module.exports = {
     },
   },
 };
+
+export default config;
