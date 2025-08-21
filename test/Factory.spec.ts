@@ -14,11 +14,11 @@ import {
   slice,
 } from "viem";
 
-describe("Permissionless CREATE2 Factory", async function () {
+describe("Permissionless CREATE2 Factory", async () => {
   const { viem, networkHelpers } = await network.connect();
 
-  describe("constants", function () {
-    it("should have correct derived constants", async function () {
+  describe("constants", () => {
+    it("should have correct derived constants", async () => {
       const constants = await viem.deployContract("Constants");
 
       const address = getContractAddress({
@@ -35,19 +35,19 @@ describe("Permissionless CREATE2 Factory", async function () {
       const hash = await wallet.sendTransaction({
         data: await constants.read.INITCODE(),
       });
-      const { contractAddress: factory } = await client
-        .waitForTransactionReceipt({ hash });
+      const { contractAddress: factory } =
+        await client.waitForTransactionReceipt({ hash });
       if (!factory) {
         throw new Error("factory test deployment failed");
       }
-      const runtimeCode = await client.getCode({ address: factory }) ?? "0x";
+      const runtimeCode = (await client.getCode({ address: factory })) ?? "0x";
       const codeHash = keccak256(runtimeCode);
 
       assert.equal(await constants.read.RUNCODE(), runtimeCode);
       assert.equal(await constants.read.CODEHASH(), codeHash);
     });
 
-    it("should be a verifiably computed salt", async function () {
+    it("should be a verifiably computed salt", async () => {
       const constants = await viem.deployContract("Constants");
 
       const contract = {
@@ -72,7 +72,7 @@ describe("Permissionless CREATE2 Factory", async function () {
     });
   });
 
-  describe("implementation", function () {
+  describe("implementation", () => {
     async function fixture() {
       const client = await viem.getPublicClient();
       const [wallet] = await viem.getWalletClients();
@@ -111,16 +111,19 @@ describe("Permissionless CREATE2 Factory", async function () {
       return bytesToHex(salt);
     }
 
-    function encodeDeployment(
-      { salt, bytecode }: { salt: Hex; bytecode: Hex },
-    ) {
+    function encodeDeployment({
+      salt,
+      bytecode,
+    }: {
+      salt: Hex;
+      bytecode: Hex;
+    }) {
       return encodePacked(["bytes32", "bytes"], [salt, bytecode]);
     }
 
-    it("should allow CREATE2 deployments of contracts", async function () {
-      const { client, factory, deploy } = await networkHelpers.loadFixture(
-        fixture,
-      );
+    it("should allow CREATE2 deployments of contracts", async () => {
+      const { client, factory, deploy } =
+        await networkHelpers.loadFixture(fixture);
 
       const salt = randomSalt();
       const { bytecode } = await artifacts.readArtifact("Bootstrap");
@@ -134,16 +137,15 @@ describe("Permissionless CREATE2 Factory", async function () {
       assert.equal(await client.getCode({ address }), undefined);
 
       const deployedAddress = await deploy({ salt, bytecode });
-      const deployedCode = await client.getCode({ address }) ?? "0x";
+      const deployedCode = (await client.getCode({ address })) ?? "0x";
 
       assert.strictEqual(deployedAddress, address);
       assert.notEqual(size(deployedCode), 0);
     });
 
-    it("should allow CREATE2 deployments with empty code", async function () {
-      const { client, factory, deploy } = await networkHelpers.loadFixture(
-        fixture,
-      );
+    it("should allow CREATE2 deployments with empty code", async () => {
+      const { client, factory, deploy } =
+        await networkHelpers.loadFixture(fixture);
 
       const salt = randomSalt();
       const bytecode = "0x";
@@ -155,16 +157,14 @@ describe("Permissionless CREATE2 Factory", async function () {
       });
 
       const deployedAddress = await deploy({ salt, bytecode });
-      const deployedCode = await client.getCode({ address }) ?? "0x";
+      const deployedCode = (await client.getCode({ address })) ?? "0x";
 
       assert.strictEqual(deployedAddress, address);
       assert.strictEqual(deployedCode, "0x");
     });
 
-    it("should revert when input is incorrectly encoded", async function () {
-      const { client, factory } = await networkHelpers.loadFixture(
-        fixture,
-      );
+    it("should revert when input is incorrectly encoded", async () => {
+      const { client, factory } = await networkHelpers.loadFixture(fixture);
 
       const salt = randomSalt();
       for (let i = 0; i < 32; i++) {
@@ -173,7 +173,7 @@ describe("Permissionless CREATE2 Factory", async function () {
       }
     });
 
-    it("should propagate reverts", async function () {
+    it("should propagate reverts", async () => {
       const { factory } = await networkHelpers.loadFixture(fixture);
 
       const salt = randomSalt();
@@ -184,7 +184,9 @@ describe("Permissionless CREATE2 Factory", async function () {
       // the underlying call succeeded and the complete return data.
 
       const executor = await viem.deployContract("Executor");
-      const { result: [success, result] } = await executor.simulate.execute([
+      const {
+        result: [success, result],
+      } = await executor.simulate.execute([
         factory,
         encodeDeployment({ salt, bytecode }),
       ]);
