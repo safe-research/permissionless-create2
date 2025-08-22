@@ -4,7 +4,8 @@
   "description": "ERC-7955: Permissionless CREATE2 Factory",
   "type": "module",
   "scripts": {
-    "build": "hardhat compile && tsc -b && vite build",
+    "build": "hardhat compile && tsc -b",
+    "build:pages": "vite build --base=/erc-7955/",
     "lint": "biome check",
     "start": "vite",
     "test": "hardhat test nodejs"

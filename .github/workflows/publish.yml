@@ -28,7 +28,7 @@ jobs:
           cache: "npm"
       - uses: actions/configure-pages@v5
       - run: npm ci
-      - run: npm run build
+      - run: npm run build:pages
       - uses: actions/upload-pages-artifact@v4
         with:
           path: app/dist
