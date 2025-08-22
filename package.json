@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "hardhat compile && tsc -b",
-    "build:pages": "vite build --base=/erc-7955/",
+    "build:pages": "hardhat compile && vite build --base=/erc-7955/",
     "lint": "biome check",
     "start": "vite",
     "test": "hardhat test nodejs"
