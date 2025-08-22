@@ -4,21 +4,19 @@ import { network } from "hardhat";
 import { mnemonicToAccount, privateKeyToAccount } from "viem/accounts";
 import { deployer, factory } from "../src/index.ts";
 
-describe("TypeScript Library", async function () {
+describe("TypeScript Library", async () => {
   const { viem } = await network.connect();
 
-  it("should match deployer address", function () {
-    for (
-      const account of [
-        mnemonicToAccount(deployer.mnemonic),
-        privateKeyToAccount(deployer.privateKey),
-      ]
-    ) {
+  it("should match deployer address", () => {
+    for (const account of [
+      mnemonicToAccount(deployer.mnemonic),
+      privateKeyToAccount(deployer.privateKey),
+    ]) {
       assert.strictEqual(deployer.address, account.address);
     }
   });
 
-  it("should match Solidity constants", async function () {
+  it("should match Solidity constants", async () => {
     const constants = await viem.deployContract("Constants");
 
     assert.strictEqual(deployer.address, await constants.read.DEPLOYER());

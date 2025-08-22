@@ -5,7 +5,7 @@ import { type Address, encodeFunctionData } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { deployer, factory } from "../src/index.ts";
 
-describe("Bootstrap", async function () {
+describe("Bootstrap", async () => {
   const { viem, networkHelpers } = await network.connect();
 
   async function fixture() {
@@ -25,9 +25,9 @@ describe("Bootstrap", async function () {
     return { client, bootstrap, deployerAuthorization };
   }
 
-  it("should deploy the CREATE2 factory contract", async function () {
-    const { client, bootstrap, deployerAuthorization } = await networkHelpers
-      .loadFixture(fixture);
+  it("should deploy the CREATE2 factory contract", async () => {
+    const { client, bootstrap, deployerAuthorization } =
+      await networkHelpers.loadFixture(fixture);
 
     let code = await client.getCode(factory);
 
@@ -41,9 +41,9 @@ describe("Bootstrap", async function () {
     assert.strictEqual(code, factory.runtimeCode);
   });
 
-  it("should be idempotent", async function () {
-    const { client, bootstrap, deployerAuthorization } = await networkHelpers
-      .loadFixture(fixture);
+  it("should be idempotent", async () => {
+    const { client, bootstrap, deployerAuthorization } =
+      await networkHelpers.loadFixture(fixture);
 
     await bootstrap.write.deploy({
       authorizationList: [await deployerAuthorization()],
@@ -53,20 +53,18 @@ describe("Bootstrap", async function () {
     assert.strictEqual(code, factory.runtimeCode);
 
     const delegate = await viem.deployContract("Delegate");
-    for (
-      const authorizationList of [
-        undefined,
-        [await deployerAuthorization(bootstrap)],
-        [await deployerAuthorization(delegate)],
-      ]
-    ) {
+    for (const authorizationList of [
+      undefined,
+      [await deployerAuthorization(bootstrap)],
+      [await deployerAuthorization(delegate)],
+    ]) {
       await assert.doesNotReject(bootstrap.write.deploy({ authorizationList }));
     }
   });
 
-  it("should re-delegate the deployer", async function () {
-    const { client, bootstrap, deployerAuthorization } = await networkHelpers
-      .loadFixture(fixture);
+  it("should re-delegate the deployer", async () => {
+    const { client, bootstrap, deployerAuthorization } =
+      await networkHelpers.loadFixture(fixture);
 
     let code = await client.getCode(factory);
 
@@ -78,16 +76,18 @@ describe("Bootstrap", async function () {
     // `write` functions do not submit transactions that would revert. This
     // tests that even reverting transactions apply delegations!
     const [wallet] = await viem.getWalletClients();
-    await assert.rejects(wallet.sendTransaction({
-      to: bootstrap.address,
-      data: encodeFunctionData({
-        abi: bootstrap.abi,
-        functionName: "deploy",
-        args: [],
+    await assert.rejects(
+      wallet.sendTransaction({
+        to: bootstrap.address,
+        data: encodeFunctionData({
+          abi: bootstrap.abi,
+          functionName: "deploy",
+          args: [],
+        }),
+        gas: 100000n,
+        authorizationList: [await deployerAuthorization(delegate)],
       }),
-      gas: 100000n,
-      authorizationList: [await deployerAuthorization(delegate)],
-    }));
+    );
 
     const delegated = await viem.getContractAt("Delegate", deployer.address);
     const message = await delegated.read.echo(["hello"]);
@@ -104,7 +104,7 @@ describe("Bootstrap", async function () {
     assert.strictEqual(code, factory.runtimeCode);
   });
 
-  it("should revert without a valid delegation", async function () {
+  it("should revert without a valid delegation", async () => {
     const { bootstrap } = await networkHelpers.loadFixture(fixture);
 
     await viem.assertions.revertWithCustomError(
@@ -114,7 +114,7 @@ describe("Bootstrap", async function () {
     );
   });
 
-  it("should revert when bootstrapped without delegation", async function () {
+  it("should revert when bootstrapped without delegation", async () => {
     const { bootstrap } = await networkHelpers.loadFixture(fixture);
 
     await viem.assertions.revertWithCustomError(

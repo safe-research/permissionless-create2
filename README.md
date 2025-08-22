@@ -8,18 +8,18 @@ This project implements [ERC-7955: Permissionless CREATE2 Factory](https://ercs.
 
 ## Deployment
 
-The address of the CREATE2 factory is `0xC0DEa6bB18fdb0182EE3a77e30e684A8FA5a450E` on all EVM chains.
+The address of the CREATE2 factory is `0xC0DEb853af168215879d284cc8B4d0A645fA9b0E` on all EVM chains.
 
 ## How it Works
 
 This CREATE2 factory deployment method relies on a publicly known private key, which signs EIP-7702 delegations to execute the deployment. The public deployer account at address `0x962560A0333190D57009A0aAAB7Bfa088f58461C` signs a delegation to any contract that does a `CREATE2` with a predefined `INITCODE` and `SALT`:
 
 ```solidity
-bytes constant INITCODE = hex"601f8060095f395ff35f35602036038060205f375f34f5806018573d5f5f3e5ffd5b5f5260205ff3";
-bytes32 constant SALT = hex"d817eb709c5a0c86d13fbe0f8b653c3d5e16a37b6bac4ac6406bf5f7d09d6eb6";
+bytes constant INITCODE = hex"7c60203d3d3582360380843d373d34f5806019573d813d933efd5b3d52f33d52601d6003f3";
+bytes32 constant SALT = hex"000000000000000000000000000000000000000000000000000000000001bec5";
 ```
 
-This guarantees a CREATE2 factory contract be deployed to `0xC0DEa6bB18fdb0182EE3a77e30e684A8FA5a450E` with well-known code. Note that it is not an issue for the deployer private key to be publicly known, as transactions from that account, or alternate delegations can neither prevent the successful deployment of the CREATE2 factory, or have it contain unexpected runtime code.
+This guarantees a CREATE2 factory contract be deployed to `0xC0DEb853af168215879d284cc8B4d0A645fA9b0E` with well-known code. Note that it is not an issue for the deployer private key to be publicly known, as transactions from that account, or alternate delegations can neither prevent the successful deployment of the CREATE2 factory, or have it contain unexpected runtime code.
 
 This repository contains a reference `Bootstrap` contract that the deployer account can delegate to in order to deploy the CREATE2 factory.
 
