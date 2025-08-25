@@ -75,7 +75,7 @@ function TransactionButton({
         // This gives feedback to the user that the transaction succeeded, while
         // preventing the transaction button from "flashing" back to enabled in
         // the time it takes for block chain state to propagate through the app.
-        setTimeout(() => setHash(null), 2000);
+        setTimeout(() => setHash(null), 15000);
       } else {
         setHash(null);
         setReverted(false);
