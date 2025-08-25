@@ -123,4 +123,59 @@ describe("Bootstrap", async () => {
       "CreationFailed",
     );
   });
+
+  it("should recover from out of gas reverts", async () => {
+    const { client, bootstrap, deployerAuthorization } =
+      await networkHelpers.loadFixture(fixture);
+
+    const [wallet] = await viem.getWalletClients();
+    await wallet.sendTransaction({
+      to: `0x${"00".repeat(20)}`,
+      authorizationList: [await deployerAuthorization()],
+    });
+
+    // Work around viem `.write` methods not submitting transactions that would
+    // revert (which we _want_ to do for this test).
+
+    const executor = await viem.deployContract("Executor");
+    const call = [
+      bootstrap.address,
+      encodeFunctionData({
+        abi: bootstrap.abi,
+        functionName: "deploy",
+      }),
+    ];
+    const gas = await executor.estimateGas.execute(call);
+
+    {
+      const {
+        result: [success],
+        request,
+      } = await executor.simulate.execute(call, { gas: gas - 100n });
+
+      assert.strictEqual(success, false);
+
+      await wallet.writeContract(request);
+      const code = await client.getCode(factory);
+
+      assert.strictEqual(code, undefined);
+    }
+
+    {
+      // For some reason, gas estimation is a little off for the deployment,
+      // transaction, so bump it so that it succeeds.
+      const bump = 1500n;
+      const {
+        result: [success],
+        request,
+      } = await executor.simulate.execute(call, { gas: gas + bump });
+
+      assert.strictEqual(success, true);
+
+      await wallet.writeContract(request);
+      const code = await client.getCode(factory);
+
+      assert.strictEqual(code, factory.runtimeCode);
+    }
+  });
 });
