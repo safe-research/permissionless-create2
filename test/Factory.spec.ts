@@ -179,7 +179,7 @@ describe("Permissionless CREATE2 Factory", async () => {
       const salt = randomSalt();
       const { bytecode } = await artifacts.readArtifact("Revert");
 
-      // work around viem assertions only working for contract calls: we do an
+      // Work around viem assertions only working for contract calls: we do an
       // onchain call to an "executor" contract that just returns whether or not
       // the underlying call succeeded and the complete return data.
 
