@@ -5,13 +5,17 @@ import {
   Code,
   Container,
   Group,
+  Notification,
   Space,
   Text,
 } from "@mantine/core";
+import { useState } from "react";
 import { Connect } from "@/components/Connect.tsx";
 import { Deploy } from "@/components/Deploy.tsx";
 
 function App() {
+  const [showBanner, setShowBanner] = useState(true);
+
   return (
     <AppShell header={{ height: 60 }} padding="md">
       <AppShell.Header>
@@ -22,6 +26,21 @@ function App() {
       </AppShell.Header>
       <AppShell.Main>
         <Container>
+          {showBanner && (
+            <>
+              <Notification
+                icon={"⚠"}
+                color="yellow"
+                title="Warning"
+                onClose={() => setShowBanner(false)}
+              >
+                This demo is an experimental beta release. Additionally,
+                ERC-7955 is still in draft and subject to breaking changes. Use
+                at your own risk.
+              </Notification>
+              <Space h="md" />
+            </>
+          )}
           <Blockquote>
             <Text>
               The ERC-7955 permissionless CREATE2 factory can be deployed by
