@@ -49,7 +49,6 @@ function useBurnerMissingFunds({
       return { balance, missingFunds };
     },
     enabled: !!client,
-    staleTime: 1000,
     refetchInterval: 1000,
   });
 }
