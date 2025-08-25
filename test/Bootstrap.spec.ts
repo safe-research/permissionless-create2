@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { network } from "hardhat";
-import { type Address, encodeFunctionData } from "viem";
+import { type Address, encodeFunctionData, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { deployer, factory } from "../src/index.ts";
 
@@ -143,8 +143,9 @@ describe("Bootstrap", async () => {
       encodeFunctionData({
         abi: bootstrap.abi,
         functionName: "deploy",
+        args: [],
       }),
-    ];
+    ] as [Address, Hex];
     const gas = await executor.estimateGas.execute(call);
 
     {
